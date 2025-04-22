@@ -1,0 +1,6 @@
+npm create vite@latest frontend --template react
+npm install @monaco-editor/react
+
+-----------------
+go get -u github.com/gorilla/mux
+
