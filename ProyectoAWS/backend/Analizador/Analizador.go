@@ -2,6 +2,7 @@ package Analizador
 
 import (
 	//Para leer la entrada del usuario
+	"context"
 	"ejemplo2/FileSystem"
 	"ejemplo2/Gestion"
 	"ejemplo2/Structs"
@@ -14,6 +15,10 @@ import (
 	"path/filepath"
 	"regexp"  //buscar y extraer parametros en la entrada
 	"strings" //manipular cadenas de texto
+
+	"github.com/aws/aws-sdk-go-v2/aws"
+	"github.com/aws/aws-sdk-go-v2/config"
+	"github.com/aws/aws-sdk-go-v2/service/s3"
 )
 
 // ER  mkdisk -size=3000 -unit=K -fit=BF -path=/home/cerezo/Disks/disk1.bin
@@ -24,6 +29,38 @@ var re = regexp.MustCompile(`-(\w+)=("[^"]+"|\S+)`)
 /*
 parts[0] es "mkdisk"
 */
+
+// Sube un archivo a un bucket de S3
+func uploadToS3(localFilePath, bucketName, s3Key string) error {
+	// Carga la configuración predeterminada (incluye el rol IAM si estás en EC2)
+	cfg, err := config.LoadDefaultConfig(context.TODO(), config.WithRegion("us-east-2"))
+	if err != nil {
+		return fmt.Errorf("error al cargar configuración de AWS: %v", err)
+	}
+
+	// Cliente S3
+	client := s3.NewFromConfig(cfg)
+
+	// Abre el archivo local
+	file, err := os.Open(localFilePath)
+	if err != nil {
+		return fmt.Errorf("error al abrir el archivo local: %v", err)
+	}
+	defer file.Close()
+
+	// Subida a S3
+	_, err = client.PutObject(context.TODO(), &s3.PutObjectInput{
+		Bucket: aws.String(bucketName),
+		Key:    aws.String(s3Key),
+		Body:   file,
+	})
+	if err != nil {
+		return fmt.Errorf("error al subir a S3: %v", err)
+	}
+
+	fmt.Println("Imagen subida a S3 correctamente como:", s3Key)
+	return nil
+}
 
 func getCommandAndParams(input string) (string, string) {
 	parts := strings.Fields(input)
@@ -467,6 +504,11 @@ func fn_rep(input string) {
 				fmt.Println("Error al renderizar el archivo .dot a imagen:", err)
 			} else {
 				fmt.Println("Imagen generada exitosamente en:", outputJpg)
+			}
+			// Subir a S3 después de generar la imagen
+			err = uploadToS3(outputJpg, "201900285mialabsc ", filepath.Base(outputJpg))
+			if err != nil {
+				fmt.Println("Error al subir la imagen a S3:", err)
 			}
 		}
 

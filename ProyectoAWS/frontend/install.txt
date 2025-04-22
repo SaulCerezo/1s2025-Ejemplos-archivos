@@ -4,3 +4,20 @@ npm install @monaco-editor/react
 -----------------
 go get -u github.com/gorilla/mux
 
+--------------------------------------------- preparativo para AWS
+------------------------------------- front 
+npm install react-router-dom
+------------------------------------- back
+go mod tidy 
+go get github.com/aws/aws-sdk-go-v2
+go get github.com/aws/aws-sdk-go-v2/config
+go get github.com/aws/aws-sdk-go-v2/service/s3
+
+
+------------------------------------- VM    
+sudo apt update
+sudo apt upgrade
+sudo apt install golang
+go versión
+sudo apt install graphviz -y
+---------------------------------------------

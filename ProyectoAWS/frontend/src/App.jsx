@@ -1,35 +1,42 @@
 import { useState } from "react";
 import MonacoEditor from "@monaco-editor/react";
+import { Link } from 'react-router-dom';
 import './App.css'; 
 
 function App() {
-  //almacenar texto de la entrada
+  // almacenar texto de entrada
   const [inputText, setInputText] = useState("");
-  //almacena texto despues de ser procesado
+  // almacenar texto después de ser procesado
   const [outputText, setOutputText] = useState("");
 
-  // Se ejecuta al presionar un botón para procesar
+  // obtener la URL del backend desde localStorage (o usar localhost por defecto)
+  const backendURL = localStorage.getItem("backend_url") || "http://localhost:8080";
+
+  // Ejecutar solicitud al backend
   const handleExecute = async () => {
     try {
-      // Envia una solicitud POST a la API en localhost:8080
-      const response = await fetch("http://localhost:8080/api/analyze", {
+      const response = await fetch(`${backendURL}/api/analyze`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ input: inputText }), // Envía el texto ingresado
+        body: JSON.stringify({ input: inputText }),
       });
 
-      // Convierte la respuesta en JSON
-      const data = await response.json();
-      // Actualiza el estado del servidor
-      setOutputText(data.response);
+      const data = await response.text(); // usas Fprintln así que espera texto
+      setOutputText(data);
     } catch (error) {
       console.error("Error:", error);
+      setOutputText("Error al conectar con el backend");
     }
   };
 
   return (
     <div className="container">
       <h1 className="title">Analizador</h1>
+
+      <Link to="/about" style={{ marginBottom: "1rem", display: "inline-block", color: "#61dafb" }}>
+        Configurar IP del Backend
+      </Link>
+
       <div className="textarea-container">
         <MonacoEditor
           value={inputText}
@@ -46,8 +53,9 @@ function App() {
           readOnly
           placeholder="Resultado..."
           className="output-textarea"
-          />
+        />
       </div>
+
       <button className="execute-button" onClick={handleExecute}>
         Ejecutar
       </button>
